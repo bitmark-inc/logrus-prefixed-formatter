@@ -112,5 +112,9 @@ formatter.SetColorScheme(&prefixed.ColorScheme{
 })
 ```
 
+#### `SetAllowedPrefixes(allowsPrefixes []string)`
+
+Set a filter for prefixes to log. Leave empty array for logging all prefixes.
+
 # License
 MIT

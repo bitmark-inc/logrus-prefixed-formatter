@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mgutz/ansi"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -116,6 +116,9 @@ type TextFormatter struct {
 	// Whether the logger's out is to a terminal.
 	isTerminal bool
 
+	// loggingPrefixCache uses a map to cache what prefixes to be formatted and logged
+	loggingPrefixCache map[string]bool
+
 	sync.Once
 }
 
@@ -164,7 +167,33 @@ func (f *TextFormatter) SetColorScheme(colorScheme *ColorScheme) {
 	f.colorScheme = compileColorScheme(colorScheme)
 }
 
+// SetAllowedPrefixes to define a list of allowed prefix to be logged.
+// Leave empty for logging all.
+func (f *TextFormatter) SetAllowedPrefixes(allowsPrefixes []string) {
+	if allowsPrefixes == nil || len(allowsPrefixes) == 0 {
+		f.loggingPrefixCache = nil
+	}
+
+	// reset the cache, also allow empty prefix by default
+	f.loggingPrefixCache = map[string]bool{
+		"": true,
+	}
+
+	// put prefix to the cache
+	for _, prefix := range allowsPrefixes {
+		f.loggingPrefixCache[prefix] = true
+	}
+}
+
 func (f *TextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	if f.loggingPrefixCache != nil {
+		if prefix, ok := entry.Data["prefix"]; ok {
+			if value, ok := f.loggingPrefixCache[prefix]; value && ok {
+				return []byte{}, nil
+			}
+		}
+	}
+
 	var b *bytes.Buffer
 	var keys []string = make([]string, 0, len(entry.Data))
 	for k := range entry.Data {
