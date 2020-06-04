@@ -188,7 +188,7 @@ func (f *TextFormatter) SetAllowedPrefixes(allowsPrefixes []string) {
 func (f *TextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	if f.loggingPrefixCache != nil {
 		if prefix, ok := entry.Data["prefix"].(string); ok {
-			if value, ok := f.loggingPrefixCache[prefix]; value && ok {
+			if value, ok := f.loggingPrefixCache[prefix]; !ok || !value {
 				return []byte{}, nil
 			}
 		}
